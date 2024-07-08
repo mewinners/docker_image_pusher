@@ -10,3 +10,4 @@ linuxserver/transmission
 natpierce/natpierce
 portainer/portainer-ee
 xhofe/alist
+gdy666/lucky

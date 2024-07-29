@@ -14,3 +14,4 @@ gdy666/lucky
 containrrr/watchtower
 b3log/siyuan
 linuxserver/obsidian
+vaultwarden/server

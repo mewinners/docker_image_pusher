@@ -9,6 +9,7 @@ linuxserver/qbittorrent
 linuxserver/transmission
 natpierce/natpierce
 portainer/portainer-ee
+portainer/portainer-ce
 xhofe/alist
 gdy666/lucky
 containrrr/watchtower

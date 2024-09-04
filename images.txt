@@ -17,3 +17,4 @@ b3log/siyuan
 linuxserver/obsidian
 vaultwarden/server
 linuxserver/pairdrop
+rustdesk/rustdesk-server

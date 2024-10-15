@@ -18,3 +18,4 @@ linuxserver/obsidian
 vaultwarden/server
 linuxserver/pairdrop
 rustdesk/rustdesk-server
+rustdesk/rustdesk-server-s6

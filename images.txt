@@ -19,3 +19,4 @@ vaultwarden/server
 linuxserver/pairdrop
 rustdesk/rustdesk-server
 rustdesk/rustdesk-server-s6
+linuxserver/snapdrop

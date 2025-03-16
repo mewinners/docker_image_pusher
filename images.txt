@@ -22,3 +22,4 @@ rustdesk/rustdesk-server-s6
 minio/minio
 bitnami/minio
 portainer/agent
+milvusdb/milvus

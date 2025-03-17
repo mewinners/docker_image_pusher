@@ -23,3 +23,4 @@ minio/minio
 bitnami/minio
 portainer/agent
 milvusdb/milvus
+mintplexlabs/anythingllm

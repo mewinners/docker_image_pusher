@@ -24,3 +24,4 @@ bitnami/minio
 portainer/agent
 milvusdb/milvus
 mintplexlabs/anythingllm
+hectorqin/reader

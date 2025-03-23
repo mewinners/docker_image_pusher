@@ -25,3 +25,4 @@ portainer/agent
 milvusdb/milvus
 mintplexlabs/anythingllm
 hectorqin/reader
+ouqg/gocron

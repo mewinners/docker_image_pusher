@@ -26,3 +26,5 @@ milvusdb/milvus
 mintplexlabs/anythingllm
 hectorqin/reader
 ouqg/gocron
+libretranslate/libretranslate
+missuo/deeplx

@@ -28,3 +28,5 @@ hectorqin/reader
 ouqg/gocron
 libretranslate/libretranslate
 missuo/deeplx
+seafileltd/seafile-mc
+seafileltd/seafile-pro-mc

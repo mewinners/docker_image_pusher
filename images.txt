@@ -33,3 +33,4 @@ seafileltd/seafile-pro-mc:12.0-latest
 corentinth/it-tools
 stirlingtools/stirling-pdf
 syncthing/syncthing
+linuxserver/syncthing

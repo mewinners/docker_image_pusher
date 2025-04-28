@@ -34,3 +34,4 @@ corentinth/it-tools
 stirlingtools/stirling-pdf
 syncthing/syncthing
 linuxserver/syncthing
+linuxserver/resilio-sync

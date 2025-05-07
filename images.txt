@@ -36,3 +36,4 @@ syncthing/syncthing
 linuxserver/syncthing
 linuxserver/resilio-sync
 jxxghp/moviepilot-v2
+homeassistant/home-assistant

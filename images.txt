@@ -38,3 +38,4 @@ linuxserver/resilio-sync
 jxxghp/moviepilot-v2
 homeassistant/home-assistant
 jellyfin/jellyfin
+sissbruecker/linkding

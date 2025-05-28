@@ -40,3 +40,4 @@ homeassistant/home-assistant
 jellyfin/jellyfin
 sissbruecker/linkding
 cloudflare/cloudflared
+natfrp/launcher

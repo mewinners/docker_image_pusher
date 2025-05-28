@@ -42,3 +42,4 @@ sissbruecker/linkding
 cloudflare/cloudflared
 natfrp/launcher
 openfrp/frpc
+fatedier/frpc

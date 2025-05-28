@@ -43,6 +43,7 @@ cloudflare/cloudflared
 natfrp/launcher
 openfrp/frpc
 fatedier/frpc
+stilleshan/frpc
 netbirdio/netbird
 tailscale/tailscale
 zerotier/zerotier

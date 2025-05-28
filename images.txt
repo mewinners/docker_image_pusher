@@ -44,3 +44,5 @@ natfrp/launcher
 openfrp/frpc
 fatedier/frpc
 netbirdio/netbird
+tailscale/tailscale
+zerotier/zerotier

@@ -42,7 +42,7 @@ sissbruecker/linkding
 cloudflare/cloudflared
 natfrp/launcher
 openfrp/frpc
-fatedier/frpc
+# fatedier/frpc
 stilleshan/frpc
 netbirdio/netbird
 tailscale/tailscale

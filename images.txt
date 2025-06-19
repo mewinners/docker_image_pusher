@@ -10,7 +10,7 @@ linuxserver/transmission
 natpierce/natpierce
 portainer/portainer-ee
 portainer/portainer-ce
-xhofe/alist
+openlistteam/openlist
 gdy666/lucky
 containrrr/watchtower
 b3log/siyuan

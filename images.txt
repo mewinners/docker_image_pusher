@@ -48,3 +48,4 @@ netbirdio/netbird
 tailscale/tailscale
 zerotier/zerotier
 snowdreamtech/frpc
+xgheaven/homebox

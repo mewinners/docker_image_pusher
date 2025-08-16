@@ -50,3 +50,4 @@ zerotier/zerotier
 snowdreamtech/frpc
 xgheaven/homebox
 networkstatic/iperf3
+jc21/nginx-proxy-manager

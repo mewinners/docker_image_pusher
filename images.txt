@@ -52,3 +52,4 @@ xgheaven/homebox
 networkstatic/iperf3
 jc21/nginx-proxy-manager
 jeessy/ddns-go
+chishin/nginx-proxy-manager-zh

@@ -41,6 +41,7 @@ jellyfin/jellyfin
 sissbruecker/linkding
 cloudflare/cloudflared
 natfrp/launcher
+natfrp/frpc
 openfrp/frpc
 # fatedier/frpc
 stilleshan/frpc

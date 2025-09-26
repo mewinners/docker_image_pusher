@@ -55,3 +55,4 @@ jc21/nginx-proxy-manager
 jeessy/ddns-go
 chishin/nginx-proxy-manager-zh
 linuxserver/deluge
+talebook/talebook

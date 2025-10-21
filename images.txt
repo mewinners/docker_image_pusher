@@ -20,7 +20,6 @@ linuxserver/pairdrop
 rustdesk/rustdesk-server
 rustdesk/rustdesk-server-s6
 minio/minio
-bitnami/minio
 portainer/agent
 milvusdb/milvus
 mintplexlabs/anythingllm

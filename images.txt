@@ -8,6 +8,7 @@ easytier/easytier
 linuxserver/qbittorrent
 linuxserver/transmission
 natpierce/natpierce
+xiyu505/natpierce
 portainer/portainer-ee
 portainer/portainer-ce
 openlistteam/openlist

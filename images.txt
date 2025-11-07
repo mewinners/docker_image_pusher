@@ -49,6 +49,7 @@ netbirdio/netbird
 tailscale/tailscale
 zerotier/zerotier
 snowdreamtech/frpc
+snowdreamtech/frps
 xgheaven/homebox
 networkstatic/iperf3
 jc21/nginx-proxy-manager

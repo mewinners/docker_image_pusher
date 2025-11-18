@@ -58,3 +58,4 @@ chishin/nginx-proxy-manager-zh
 linuxserver/deluge
 talebook/talebook
 schollz/croc
+neosmemo/memos

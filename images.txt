@@ -60,3 +60,4 @@ talebook/talebook
 schollz/croc
 neosmemo/memos
 blinkospace/blinko
+bentopdf/bentopdf-simple

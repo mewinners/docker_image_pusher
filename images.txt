@@ -58,3 +58,4 @@ schollz/croc
 neosmemo/memos:stable
 blinkospace/blinko
 bentopdf/bentopdf-simple
+seriousm4x/upsnap

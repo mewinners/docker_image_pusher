@@ -13,6 +13,7 @@ portainer/portainer-ee
 portainer/portainer-ce
 openlistteam/openlist
 gdy666/lucky
+gdy666/lucky:v2
 containrrr/watchtower
 b3log/siyuan
 linuxserver/obsidian

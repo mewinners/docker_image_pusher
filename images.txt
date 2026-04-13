@@ -63,3 +63,4 @@ seriousm4x/upsnap
 mayswind/ezbookkeeping
 2fauth/2fauth
 couchdb
+haierkeys/fast-note-sync-service

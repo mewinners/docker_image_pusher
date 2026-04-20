@@ -66,3 +66,9 @@ mayswind/ezbookkeeping
 couchdb
 haierkeys/fast-note-sync-service
 postgres
+postgres:trixie
+postgres:bookworm
+postgres:alpine
+postgres:18-trixie
+postgres:18-bookworm
+postgres:18-alpine

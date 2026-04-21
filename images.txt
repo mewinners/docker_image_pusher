@@ -75,3 +75,4 @@ postgres:18-trixie
 postgres:18-bookworm
 postgres:18-alpine
 ghcr.io/linkwarden/linkwarden
+ghcr.io/toeverything/affine:stable

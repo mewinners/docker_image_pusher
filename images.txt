@@ -81,3 +81,4 @@ ghcr.io/karakeep-app/karakeep
 metacubex/mihomo:Alpha
 metacubex/mihomo
 ghcr.io/metacubex/metacubexd
+ghcr.io/zephyruso/zashboard

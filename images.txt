@@ -80,3 +80,4 @@ nextcloud/all-in-one
 ghcr.io/karakeep-app/karakeep
 metacubex/mihomo:Alpha
 metacubex/mihomo
+ghcr.io/metacubex/metacubexd

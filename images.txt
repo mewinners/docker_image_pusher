@@ -78,3 +78,5 @@ ghcr.io/linkwarden/linkwarden
 ghcr.io/toeverything/affine:stable
 nextcloud/all-in-one
 ghcr.io/karakeep-app/karakeep
+metacubex/mihomo:Alpha
+metacubex/mihomo

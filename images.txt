@@ -82,3 +82,5 @@ metacubex/mihomo:Alpha
 metacubex/mihomo
 ghcr.io/metacubex/metacubexd
 ghcr.io/zephyruso/zashboard
+daeuniverse/dae
+daeuniverse/daed

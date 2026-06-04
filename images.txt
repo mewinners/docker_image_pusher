@@ -84,3 +84,4 @@ ghcr.io/metacubex/metacubexd
 ghcr.io/zephyruso/zashboard
 daeuniverse/dae
 daeuniverse/daed
+openwebui/open-webui

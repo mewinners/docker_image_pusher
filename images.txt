@@ -85,3 +85,4 @@ ghcr.io/zephyruso/zashboard
 daeuniverse/dae
 daeuniverse/daed
 openwebui/open-webui
+ghcr.io/ztx888/halowebui

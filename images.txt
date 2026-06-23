@@ -23,7 +23,6 @@ rustdesk/rustdesk-server
 rustdesk/rustdesk-server-s6
 portainer/agent
 mintplexlabs/anythingllm
-hectorqin/reader
 ouqg/gocron
 libretranslate/libretranslate
 missuo/deeplx

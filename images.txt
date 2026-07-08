@@ -85,3 +85,5 @@ daeuniverse/dae
 daeuniverse/daed
 openwebui/open-webui
 ghcr.io/ztx888/halowebui
+redis
+pgvector/pgvector:pg16

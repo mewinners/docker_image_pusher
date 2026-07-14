@@ -86,4 +86,5 @@ daeuniverse/daed
 openwebui/open-webui
 ghcr.io/ztx888/halowebui
 redis
+mariadb
 pgvector/pgvector:pg16

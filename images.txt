@@ -90,3 +90,4 @@ redis:7-alpine
 mariadb
 mariadb:10.11
 pgvector/pgvector:pg16
+nousresearch/hermes-agent

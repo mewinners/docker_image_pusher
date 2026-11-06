@@ -22,7 +22,6 @@ corentinth/it-tools
 syncthing/syncthing
 linuxserver/syncthing
 linuxserver/resilio-sync
-homeassistant/home-assistant
 jellyfin/jellyfin
 sissbruecker/linkding
 cloudflare/cloudflared

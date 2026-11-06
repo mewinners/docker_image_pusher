@@ -7,58 +7,164 @@ on:
   schedule:
     - cron: "11 */6 * * *"
 
-env:
-  ALIYUN_REGISTRY: "${{ secrets.ALIYUN_REGISTRY }}"
-  ALIYUN_NAME_SPACE: "${{ secrets.ALIYUN_NAME_SPACE }}"
-  ALIYUN_REGISTRY_USER: "${{ secrets.ALIYUN_REGISTRY_USER }}"
-  ALIYUN_REGISTRY_PASSWORD: "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}"
-
 jobs:
 
   build:
     name: Pull
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
+    
     - name: Before freeing up disk space
+      shell: bash
       run: |
-        echo "Before freeing up disk space"
-        echo "=============================================================================="
+        set -euo pipefail
+
+        echo "===== Initial Disk Space ====="
         df -hT
         echo "=============================================================================="
+
+        echo "===== Mount Topology ====="
+        findmnt -T /
+        findmnt -T /mnt
+        echo "=============================================================================="
+
+        ROOT_DEV="$(findmnt -n -o MAJ:MIN -T /)"
+        MNT_DEV="$(findmnt -n -o MAJ:MIN -T /mnt)"
+        MNT_FS="$(findmnt -n -o FSTYPE -T /mnt)"
+
+        echo "Root device: $ROOT_DEV"
+        echo "Mount device: $MNT_DEV"
+        echo "Mount filesystem: $MNT_FS"
+
+        if [[ "$ROOT_DEV" == "$MNT_DEV" ]]; then
+          echo "::error::Root and /mnt share the same filesystem. Cannot safely use maximize-build-space."
+          exit 1
+        fi
+
+        if [[ "$MNT_FS" == "tmpfs" ]]; then
+          echo "::error::/mnt is RAM-backed tmpfs, not a suitable disk."
+          exit 1
+        fi
+
+        echo "Separate /mnt storage verified."
+        echo "=============================================================================="
+    
+    # 停止 Docker 和 containerd
+    - name: Stop Docker and containerd
+      run: |
+        sudo systemctl stop docker.socket || true
+        sudo systemctl stop docker.service
+        sudo systemctl stop containerd.service
+
+        # 清理 Runner 原有的 containerd 缓存
+        sudo mkdir -p /var/lib/containerd
+        sudo find /var/lib/containerd -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 
     # 增加可用磁盘空间
     - name: Maximize build space
       uses: easimon/maximize-build-space@master
       with:
-
         root-reserve-mb: 2048
         swap-size-mb: 128
         remove-dotnet: 'true'
         remove-haskell: 'true'
-        # 如果空间还是不够用，可以把以下开启，清理出更多空间
-        # remove-android: 'true'
-        # remove-codeql: 'true'
-        build-mount-path: '/var/lib/docker/'
+        remove-android: 'true'
+        remove-codeql: 'true'
+        build-mount-path: '/var/lib/containerd/'
+        build-mount-path-ownership: 'root:root'
 
-    - name: Restart docker
-      run: sudo service docker restart
 
-    - name: Free up disk space complete
+    # 验证扩容挂载并启动 Docker
+    - name: Start Docker and containerd
+      shell: bash
       run: |
-        echo "Free up disk space complete"
+        set -euo pipefail
+
+        echo "===== Verify containerd mount before startup ====="
+
+        if ! mountpoint -q /var/lib/containerd; then
+          echo "::error::Containerd expanded disk is not mounted!"
+          exit 1
+        fi
+
+        ROOT_DEV="$(findmnt -n -o MAJ:MIN -T /)"
+        CONTAINERD_DEV="$(findmnt -n -o MAJ:MIN -T /var/lib/containerd)"
+        CONTAINERD_FS="$(findmnt -n -o FSTYPE -T /var/lib/containerd)"
+
+        echo "Root device: $ROOT_DEV"
+        echo "Containerd device: $CONTAINERD_DEV"
+        echo "Containerd filesystem: $CONTAINERD_FS"
+
+        if [[ "$ROOT_DEV" == "$CONTAINERD_DEV" ]]; then
+          echo "::error::Containerd is still using the root filesystem!"
+          exit 1
+        fi
+
+        if [[ "$CONTAINERD_FS" != "ext4" ]]; then
+          echo "::error::Unexpected containerd filesystem: $CONTAINERD_FS"
+          exit 1
+        fi
+
+        echo "Expanded containerd storage verified."
         echo "=============================================================================="
-        df -hT
+
+        sudo systemctl start containerd.service
+        sudo systemctl start docker.service
+
+    # 验证磁盘扩容结果及 Docker 存储方式
+    - name: Verify storage configuration
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        echo "===== Ubuntu Version ====="
+        cat /etc/os-release
+        echo "=============================================================================="
+
+        echo "===== Docker Version ====="
+        docker version
+        echo "=============================================================================="
+
+        echo "===== Disk Space ====="
+        df -hT / /var/lib/docker /var/lib/containerd
+        echo "=============================================================================="
+
+        echo "===== Disk Inodes ====="
+        df -i / /var/lib/containerd
+        echo "=============================================================================="
+
+        echo "===== Containerd Mount ====="
+        if ! mountpoint -q /var/lib/containerd; then
+          echo "::error::Containerd directory is not mounted on expanded disk!"
+          exit 1
+        fi
+        findmnt -T /var/lib/containerd
+        echo "=============================================================================="
+
+        echo "===== Docker Storage Driver ====="
+        DRIVER_STATUS="$(docker info --format '{{ .DriverStatus }}')"
+        echo "$DRIVER_STATUS"
+
+        if ! grep -q 'io.containerd.snapshotter.v1' <<< "$DRIVER_STATUS"; then
+          echo "::error::Docker is not using containerd image store!"
+          exit 1
+        fi
+
+        echo "Docker containerd image store verified successfully."
         echo "=============================================================================="
 
     - name: Checkout Code
       uses: actions/checkout@v7
 
-    - name: Docker Setup Buildx
-      uses: docker/setup-buildx-action@v4
-
     - name: Build and push image Aliyun
+      env:
+        ALIYUN_REGISTRY: ${{ secrets.ALIYUN_REGISTRY }}
+        ALIYUN_NAME_SPACE: ${{ secrets.ALIYUN_NAME_SPACE }}
+        ALIYUN_REGISTRY_USER: ${{ secrets.ALIYUN_REGISTRY_USER }}
+        ALIYUN_REGISTRY_PASSWORD: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
+      shell: bash
       run: |
-        docker login -u $ALIYUN_REGISTRY_USER -p $ALIYUN_REGISTRY_PASSWORD $ALIYUN_REGISTRY
+        printf '%s' "$ALIYUN_REGISTRY_PASSWORD" | docker login --username "$ALIYUN_REGISTRY_USER" --password-stdin "$ALIYUN_REGISTRY"
         # 数据预处理,判断镜像是否重名
         declare -A duplicate_images
         declare -A temp_map
@@ -123,8 +229,13 @@ jobs:
 
             # 获取 镜像名:版本号  例如nginx:1.25.3
             image_name_tag=$(echo "$image" | awk -F'/' '{print $NF}')
-            # 获取命名空间 例如kasmweb  这里有种特殊情况 docker.io/nginx，把docker.io当成命名空间，也OK
+
+            # 将@sha256:等字符删除
+            image_name_tag="${image_name_tag%%@*}"
+
+            # 获取命名空间 例如kasmweb
             name_space=$(echo "$image" | awk -F'/' '{if (NF==3) print $2; else if (NF==2) print $1; else print ""}')
+
             # 获取镜像名例  例如nginx
             image_name=$(echo "$image_name_tag" | awk -F':' '{print $1}')
         
@@ -137,19 +248,26 @@ jobs:
                fi
             fi
             
-            # 将@sha256:等字符删除
-            image_name_tag="${image_name_tag%%@*}"
             new_image="$ALIYUN_REGISTRY/$ALIYUN_NAME_SPACE/$platform_prefix$name_space_prefix$image_name_tag"
-            echo "docker tag $image $new_image"
-            docker tag $image $new_image
+
+            # 获取本地镜像 ID
+            # 根据指定架构获取本地镜像 ID
+            if [[ -n "$platform" ]]; then
+                source_image_id=$(docker image inspect --platform "$platform" --format '{{.Id}}' "$image")
+            else
+                source_image_id=$(docker image inspect --format '{{.Id}}' "$image")
+            fi
+
+            echo "docker tag $source_image_id $new_image"
+            docker tag "$source_image_id" "$new_image"
             echo "docker push $new_image"
-            docker push $new_image
+            docker push "$new_image"
             echo "开始清理磁盘空间"
             echo "=============================================================================="
             df -hT
             echo "=============================================================================="
-            docker rmi $image
-            docker rmi $new_image
+            docker rmi "$image"
+            docker rmi "$new_image"
             echo "磁盘空间清理完毕"
             echo "=============================================================================="
             df -hT

@@ -23,95 +23,46 @@ jobs:
         df -hT
         echo "=============================================================================="
 
+        echo "===== Disk Inodes ====="
+        df -i /
+        echo "=============================================================================="
+
         echo "===== Mount Topology ====="
         findmnt -T /
         findmnt -T /mnt
         echo "=============================================================================="
 
-        ROOT_DEV="$(findmnt -n -o MAJ:MIN -T /)"
-        MNT_DEV="$(findmnt -n -o MAJ:MIN -T /mnt)"
-        MNT_FS="$(findmnt -n -o FSTYPE -T /mnt)"
-
-        echo "Root device: $ROOT_DEV"
-        echo "Mount device: $MNT_DEV"
-        echo "Mount filesystem: $MNT_FS"
-
-        if [[ "$ROOT_DEV" == "$MNT_DEV" ]]; then
-          echo "::error::Root and /mnt share the same filesystem. Cannot safely use maximize-build-space."
-          exit 1
-        fi
-
-        if [[ "$MNT_FS" == "tmpfs" ]]; then
-          echo "::error::/mnt is RAM-backed tmpfs, not a suitable disk."
-          exit 1
-        fi
-
-        echo "Separate /mnt storage verified."
-        echo "=============================================================================="
     
-    # 停止 Docker 和 containerd
-    - name: Stop Docker and containerd
-      run: |
-        sudo systemctl stop docker.socket || true
-        sudo systemctl stop docker.service
-        sudo systemctl stop containerd.service
-
-        # 清理 Runner 原有的 containerd 缓存
-        sudo mkdir -p /var/lib/containerd
-        sudo find /var/lib/containerd -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
-
-    # 增加可用磁盘空间
-    - name: Maximize build space
-      uses: easimon/maximize-build-space@master
-      with:
-        root-reserve-mb: 2048
-        swap-size-mb: 128
-        remove-dotnet: 'true'
-        remove-haskell: 'true'
-        remove-android: 'true'
-        remove-codeql: 'true'
-        build-mount-path: '/var/lib/containerd/'
-        build-mount-path-ownership: 'root:root'
-
-
-    # 验证扩容挂载并启动 Docker
-    - name: Start Docker and containerd
+    - name: Free up runner disk space
       shell: bash
       run: |
         set -euo pipefail
 
-        echo "===== Verify containerd mount before startup ====="
+        echo "===== Remove Unused Software ====="
 
-        if ! mountpoint -q /var/lib/containerd; then
-          echo "::error::Containerd expanded disk is not mounted!"
-          exit 1
-        fi
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
 
-        ROOT_DEV="$(findmnt -n -o MAJ:MIN -T /)"
-        CONTAINERD_DEV="$(findmnt -n -o MAJ:MIN -T /var/lib/containerd)"
-        CONTAINERD_FS="$(findmnt -n -o FSTYPE -T /var/lib/containerd)"
+        echo "===== Clean APT Cache ====="
+        sudo apt-get clean
 
-        echo "Root device: $ROOT_DEV"
-        echo "Containerd device: $CONTAINERD_DEV"
-        echo "Containerd filesystem: $CONTAINERD_FS"
+        echo "===== Clean Docker Images ====="
+        docker image prune --all --force
+        docker builder prune --all --force
 
-        if [[ "$ROOT_DEV" == "$CONTAINERD_DEV" ]]; then
-          echo "::error::Containerd is still using the root filesystem!"
-          exit 1
-        fi
+        echo "===== Disk Space After Cleanup ====="
+        df -hT
+        df -i /
 
-        if [[ "$CONTAINERD_FS" != "ext4" ]]; then
-          echo "::error::Unexpected containerd filesystem: $CONTAINERD_FS"
-          exit 1
-        fi
+        echo "===== Docker Storage Usage ====="
+        docker system df
 
-        echo "Expanded containerd storage verified."
-        echo "=============================================================================="
-
-        sudo systemctl start containerd.service
-        sudo systemctl start docker.service
-
-    # 验证磁盘扩容结果及 Docker 存储方式
+        echo "Disk cleanup completed."
+    
+    # 验证 Docker 环境及存储方式
+    
     - name: Verify storage configuration
       shell: bash
       run: |
@@ -133,14 +84,6 @@ jobs:
         df -i / /var/lib/containerd
         echo "=============================================================================="
 
-        echo "===== Containerd Mount ====="
-        if ! mountpoint -q /var/lib/containerd; then
-          echo "::error::Containerd directory is not mounted on expanded disk!"
-          exit 1
-        fi
-        findmnt -T /var/lib/containerd
-        echo "=============================================================================="
-
         echo "===== Docker Storage Driver ====="
         DRIVER_STATUS="$(docker info --format '{{ .DriverStatus }}')"
         echo "$DRIVER_STATUS"
@@ -153,6 +96,8 @@ jobs:
         echo "Docker containerd image store verified successfully."
         echo "=============================================================================="
 
+        docker system df
+
     - name: Checkout Code
       uses: actions/checkout@v7
 
@@ -164,14 +109,19 @@ jobs:
         ALIYUN_REGISTRY_PASSWORD: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
       shell: bash
       run: |
+        set -euo pipefail
+        : "${ALIYUN_REGISTRY:?ALIYUN_REGISTRY 未配置}"
+        : "${ALIYUN_NAME_SPACE:?ALIYUN_NAME_SPACE 未配置}"
+        : "${ALIYUN_REGISTRY_USER:?ALIYUN_REGISTRY_USER 未配置}"
+        : "${ALIYUN_REGISTRY_PASSWORD:?ALIYUN_REGISTRY_PASSWORD 未配置}"
         printf '%s' "$ALIYUN_REGISTRY_PASSWORD" | docker login --username "$ALIYUN_REGISTRY_USER" --password-stdin "$ALIYUN_REGISTRY"
         # 数据预处理,判断镜像是否重名
-        declare -A duplicate_images
-        declare -A temp_map
+        declare -A duplicate_images=()
+        declare -A temp_map=()
         while IFS= read -r line || [ -n "$line" ]; do
             # 忽略空行与注释
-            [[ -z "$line" ]] && continue
-            if echo "$line" | grep -q '^\s*#'; then
+            [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+            if [[ "$line" =~ ^[[:space:]]*# ]]; then
                 continue
             fi
             
@@ -193,9 +143,9 @@ jobs:
             echo "image_name: $image_name"
             
             # 如果镜像存在于数组中，则添加temp_map
-            if [[ -n "${temp_map[$image_name]}" ]]; then
+            if [[ -n "${temp_map[$image_name]:-}" ]]; then
                  # 如果temp_map已经存在镜像名，判断是不是同一命名空间
-                 if [[ "${temp_map[$image_name]}" != $name_space  ]]; then
+                 if [[ "${temp_map[$image_name]}" != "$name_space" ]]; then
                     echo "duplicate image name: $image_name"
                     duplicate_images[$image_name]="true"
                  fi
@@ -208,14 +158,25 @@ jobs:
         
         while IFS= read -r line || [ -n "$line" ]; do
             # 忽略空行与注释
-            [[ -z "$line" ]] && continue
-            if echo "$line" | grep -q '^\s*#'; then
+            [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+            if [[ "$line" =~ ^[[:space:]]*# ]]; then
                 continue
             fi
         
-            echo "docker pull $line"
-            docker pull $line
+            # 获取指定架构
             platform=$(echo "$line" | awk -F'--platform[ =]' '{if (NF>1) print $2}' | awk '{print $1}')
+
+            # 获取完整镜像名称
+            image=$(echo "$line" | awk '{print $NF}')
+
+            # 拉取镜像
+            if [[ -n "$platform" ]]; then
+                echo "docker pull --platform $platform $image"
+                docker pull --platform "$platform" "$image"
+            else
+                echo "docker pull $image"
+                docker pull "$image"
+            fi
             echo "platform is $platform"
             # 如果存在架构信息 将架构信息拼到镜像名称前面
             if [ -z "$platform" ]; then
@@ -224,8 +185,6 @@ jobs:
                 platform_prefix="${platform//\//_}_"
             fi
             echo "platform_prefix is $platform_prefix"
-            # 获取镜像的完整名称，例如kasmweb/nginx:1.25.3（命名空间/镜像名:版本号）
-            image=$(echo "$line" | awk '{print $NF}')
 
             # 获取 镜像名:版本号  例如nginx:1.25.3
             image_name_tag=$(echo "$image" | awk -F'/' '{print $NF}')
@@ -241,7 +200,7 @@ jobs:
         
             name_space_prefix=""
             # 如果镜像名重名
-            if [[ -n "${duplicate_images[$image_name]}" ]]; then
+            if [[ -n "${duplicate_images[$image_name]:-}" ]]; then
                #如果命名空间非空，将命名空间加到前缀
                if [[ -n "${name_space}" ]]; then
                   name_space_prefix="${name_space}_"
@@ -268,6 +227,8 @@ jobs:
             echo "=============================================================================="
             docker rmi "$image"
             docker rmi "$new_image"
+            docker image prune --all --force
+            docker system df
             echo "磁盘空间清理完毕"
             echo "=============================================================================="
             df -hT
